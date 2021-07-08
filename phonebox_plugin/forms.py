@@ -8,7 +8,7 @@ from tenancy.models import Tenant
 from dcim.models import Region
 from circuits.models import Provider
 from extras.models import Tag
-from .models import Number
+from .models import Number, NumbersRange
 
 
 class NumberFilterForm(BootstrapMixin, forms.Form):
@@ -93,3 +93,96 @@ class NumberBulkEditForm(BootstrapMixin, AddRemoveTagsForm, BulkEditForm):
 
     class Meta:
         nullable_fields = ('region', 'provider', 'forward_to', 'description')
+
+
+# NumbersRange
+
+class NumbersRangeFilterForm(BootstrapMixin, forms.Form):
+
+    model = NumbersRange
+    q = forms.CharField(
+        required=False,
+        label='Search'
+    )
+    tenant = DynamicModelMultipleChoiceField(
+        queryset=Tenant.objects.all(),
+        to_field_name='slug',
+        required=False,
+        null_option='None',
+    )
+    region = DynamicModelMultipleChoiceField(
+        queryset=Region.objects.all(),
+        to_field_name='slug',
+        required=False,
+        null_option='None',
+    )
+    tag = TagFilterField(model)
+
+
+class NumbersRangeEditForm(BootstrapMixin, forms.ModelForm):
+
+    start = forms.CharField(
+        required=True,
+        widget=forms.TextInput(
+            attrs={
+                'class': 'form-control',
+                'autocomplete': 'off',
+                'pattern': r'^\+?[0-9A-D\*\#]+$',
+                'title': 'Enter the first phone number of range'
+            }
+        )
+    )
+
+    end = forms.CharField(
+        required=True,
+        widget=forms.TextInput(
+            attrs={
+                'class': 'form-control',
+                'autocomplete': 'off',
+                'pattern': r'^\+?[0-9A-D\*\#]+$',
+                'title': 'Enter the last phone number of range'
+            }
+        )
+    )
+
+    tags = DynamicModelMultipleChoiceField(
+        queryset=Tag.objects.all(),
+        required=False
+    )
+
+    class Meta:
+        model = NumbersRange
+        fields = ('start', 'end', 'tenant', 'region', 'description', 'provider', 'tags')
+
+
+class NumbersRangeBulkEditForm(BootstrapMixin, AddRemoveTagsForm, BulkEditForm):
+
+    pk = forms.ModelMultipleChoiceField(
+        queryset=NumbersRange.objects.all(),
+        widget=forms.MultipleHiddenInput()
+    )
+    tenant = DynamicModelChoiceField(
+        queryset=Tenant.objects.all(),
+        to_field_name='slug',
+        required=False,
+        null_option='None',
+    )
+    region = DynamicModelChoiceField(
+        queryset=Region.objects.all(),
+        to_field_name='slug',
+        required=False,
+        null_option='None',
+    )
+    provider = DynamicModelChoiceField(
+        queryset=Provider.objects.all(),
+        to_field_name='slug',
+        required=False,
+        null_option='None',
+    )
+    description = forms.CharField(
+        max_length=200,
+        required=False
+    )
+
+    class Meta:
+        nullable_fields = ('region', 'provider', 'description')

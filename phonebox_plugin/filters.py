@@ -3,7 +3,7 @@ from utilities.filters import BaseFilterSet, TagFilter
 from django.db.models import Q
 from dcim.models import Region
 from tenancy.models import Tenant
-from .models import Number
+from .models import Number, NumbersRange
 
 
 class NumberFilterSet(BaseFilterSet):
@@ -45,6 +45,53 @@ class NumberFilterSet(BaseFilterSet):
     class Meta():
         model = Number
         fields = ('number',)
+
+    def search(self, queryset, number, value):
+        if not value.strip():
+            return queryset
+        return queryset.filter(
+            Q(number__icontains=value)
+        )
+
+class NumbersRangeFilterSet(BaseFilterSet):
+
+    q = django_filters.CharFilter(
+        method='search',
+        label='Search',
+    )
+    start = django_filters.ModelMultipleChoiceFilter(
+        field_name='start',
+        queryset=NumbersRange.objects.all(),
+        to_field_name='start',
+        label='start',
+    )
+    end = django_filters.ModelMultipleChoiceFilter(
+        field_name='end',
+        queryset=NumbersRange.objects.all(),
+        to_field_name='end',
+        label='end',
+    )
+    tenant_id = django_filters.ModelMultipleChoiceFilter(
+        queryset=Tenant.objects.all(),
+        label='Tenant (ID)',
+    )
+    tenant = django_filters.ModelMultipleChoiceFilter(
+        queryset=Tenant.objects.all(),
+        field_name='tenant__slug',
+        to_field_name='slug',
+        label='Tenant (slug)',
+    )
+    region = django_filters.ModelMultipleChoiceFilter(
+        queryset=Region.objects.all(),
+        field_name='region__slug',
+        to_field_name='slug',
+        label='Region (slug)',
+    )
+    tag = TagFilter()
+
+    class Meta():
+        model = NumbersRange
+        fields = ('start','end',)
 
     def search(self, queryset, number, value):
         if not value.strip():

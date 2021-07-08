@@ -68,3 +68,49 @@ class Number(ChangeLoggedModel):
 
     class Meta:
         unique_together = ("number", "tenant",)
+
+class NumbersRange(ChangeLoggedModel):
+    """NumbersRange is a pair of start and end numbers that represents
+    including range of numbers
+    """
+
+    start = models.CharField(max_length=32, validators=[number_validator])
+    end = models.CharField(max_length=32, validators=[number_validator])
+
+    tenant = models.ForeignKey(
+        to='tenancy.Tenant',
+        on_delete=models.CASCADE,
+        blank=False,
+        null=False
+    )
+
+    description = models.CharField(max_length=200, blank=True)
+
+    provider = models.ForeignKey(
+        to="circuits.Provider",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="group_provider_set"
+    )
+
+    region = models.ForeignKey(
+        to="dcim.Region",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="group_region_set"
+    )
+
+    tags = TaggableManager(through=TaggedItem)
+
+    objects = RestrictedQuerySet.as_manager()
+
+    def __str__(self):
+        return str(self.start + " ... " + self.end)
+
+    def get_absolute_url(self):
+        return reverse("plugins:phonebox_plugin:range_view", kwargs={"pk": self.pk})
+
+    class Meta:
+        unique_together = ("start", "end", "tenant",)
